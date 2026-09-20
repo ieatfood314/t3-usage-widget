@@ -1,5 +1,6 @@
 package ca.heeney.t3usage
 
+import android.app.AlarmManager
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
@@ -8,6 +9,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.os.SystemClock
 import android.util.SizeF
 import android.widget.RemoteViews
 
@@ -29,22 +31,57 @@ class UsageWidget : AppWidgetProvider() {
 
     override fun onDisabled(context: Context) {
         RefreshJob.cancelAll(context)
+        cancelTicker(context)
     }
 
     override fun onReceive(context: Context, intent: Intent) {
         super.onReceive(context, intent)
-        if (intent.action == ACTION_REFRESH) RefreshJob.fetchNow(context)
+        when (intent.action) {
+            ACTION_REFRESH -> RefreshJob.fetchNow(context)
+            ACTION_TICK -> updateAll(context)
+        }
     }
 
     companion object {
         const val ACTION_REFRESH = "ca.heeney.t3usage.REFRESH"
+        const val ACTION_TICK = "ca.heeney.t3usage.TICK"
+        private const val TICK_MS = 60_000L
         private const val T3_PACKAGE = "com.t3tools.t3code"
         private const val T3_USAGE_DEEP_LINK = "t3code://settings/usage?tab=limits"
 
         fun updateAll(context: Context) {
             val manager = AppWidgetManager.getInstance(context)
-            manager.getAppWidgetIds(ComponentName(context, UsageWidget::class.java))
-                .forEach { render(context, manager, it) }
+            val ids = manager.getAppWidgetIds(ComponentName(context, UsageWidget::class.java))
+            if (ids.isEmpty()) {
+                cancelTicker(context)
+                return
+            }
+            ids.forEach { render(context, manager, it) }
+        }
+
+        /**
+         * Re-render about once a minute so "RESETS 2H 37M" counts down from the cached data even when
+         * no fetch happens. Inexact and non-wakeup: it never wakes the phone, and Doze defers it while
+         * nobody is looking. Re-arming on every render also restores it after a reboot.
+         */
+        private fun ensureTicker(context: Context) {
+            context.getSystemService(AlarmManager::class.java).setInexactRepeating(
+                AlarmManager.ELAPSED_REALTIME,
+                SystemClock.elapsedRealtime() + TICK_MS,
+                TICK_MS,
+                tickIntent(context),
+            )
+        }
+
+        private fun cancelTicker(context: Context) {
+            context.getSystemService(AlarmManager::class.java).cancel(tickIntent(context))
+        }
+
+        private fun tickIntent(context: Context): PendingIntent {
+            val intent = Intent(context, UsageWidget::class.java).setAction(ACTION_TICK)
+            return PendingIntent.getBroadcast(
+                context, 1, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            )
         }
 
         fun render(context: Context, manager: AppWidgetManager, id: Int) {
@@ -63,6 +100,7 @@ class UsageWidget : AppWidgetProvider() {
             }
             store.saveSizes(sizes.joinToString(" | ") { "${it.width.toInt()}x${it.height.toInt()}dp" }.ifEmpty { "legacy" })
             manager.updateAppWidget(id, views)
+            ensureTicker(context)
         }
 
         private fun build(

@@ -19,7 +19,8 @@ import kotlin.math.roundToInt
 
 /**
  * Draws the widget as two alpha masks: [Layers.mono] for everything monochrome (the launcher tints
- * it black or white to match the system theme) and [Layers.red] for the Nothing-red accents.
+ * it black or white to match the system theme) and [Layers.red] for the sparse Nothing-red accents:
+ * provider bullets, the failure "!", and any window that is nearly exhausted.
  * Layout is specified in dp and scaled by a fit factor so 2x3 cells on any launcher grid fill nicely.
  */
 class UsageRenderer(context: Context) {
@@ -101,8 +102,8 @@ class UsageRenderer(context: Context) {
                 monoCanvas.drawText(clip(window.label.uppercase(), labelRoom, labelPaint), x0, baseline, labelPaint)
                 y += d(LINE1_H) + d(LINE1_GAP)
 
-                // Dot-matrix bar: used portion lit red, remainder dim.
-                drawBar(monoCanvas, redCanvas, x0, x1, y, d(DOT), d(PITCH), d(ROW_GAP), used / 100f, dimDot, litDot)
+                // Dot-matrix bar: used portion lit (white; red once nearly exhausted), remainder dim.
+                drawBar(monoCanvas, if (hot) redCanvas else monoCanvas, x0, x1, y, d(DOT), d(PITCH), d(ROW_GAP), used / 100f, dimDot, litDot)
                 y += BAR_ROWS * d(DOT) + (BAR_ROWS - 1) * d(ROW_GAP) + d(BAR_GAP)
 
                 // Line 3: reset countdown.
@@ -185,7 +186,7 @@ class UsageRenderer(context: Context) {
     // ---- drawing helpers -----------------------------------------------------------------------
 
     private fun drawBar(
-        monoCanvas: Canvas, redCanvas: Canvas, x0: Float, x1: Float, top: Float,
+        monoCanvas: Canvas, litCanvas: Canvas, x0: Float, x1: Float, top: Float,
         dot: Float, pitch: Float, rowGap: Float, fraction: Float, dim: Paint, lit: Paint,
     ) {
         val count = max(2, ((x1 - x0 - dot) / pitch).toInt() + 1)
@@ -198,11 +199,11 @@ class UsageRenderer(context: Context) {
             for (i in 0 until count) {
                 val cx = x0 + i * step + radius
                 when {
-                    i + 1 <= filled -> redCanvas.drawCircle(cx, cy, radius, lit)
+                    i + 1 <= filled -> litCanvas.drawCircle(cx, cy, radius, lit)
                     i < filled -> {
                         monoCanvas.drawCircle(cx, cy, radius, dim)
                         partial.alpha = ((filled - i) * 255).roundToInt().coerceIn(0, 255)
-                        redCanvas.drawCircle(cx, cy, radius, partial)
+                        litCanvas.drawCircle(cx, cy, radius, partial)
                     }
                     else -> monoCanvas.drawCircle(cx, cy, radius, dim)
                 }
@@ -299,7 +300,8 @@ class UsageRenderer(context: Context) {
         private const val SECONDARY = 0.55f
         private const val DIM = 0.18f
         private const val SEPARATOR = 0.30f
-        private const val HOT_PERCENT = 80
+        /** Percent used at which a window's bar and number turn red ("almost out"). */
+        private const val HOT_PERCENT = 85
 
         // Layout in dp at scale 1; the design width is a 2-cell widget on a 5-column grid.
         private const val PAD = 14f

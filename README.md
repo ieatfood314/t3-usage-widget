@@ -17,9 +17,11 @@ T3 server (nas, t3code.service)
 ```
 
 The widget shows T3's `checkedAt` time in the footer ("AS OF 9:24"). A red `!` there means the
-phone's last fetch failed (Tailscale down, NAS asleep...). Percentages are **% used**; the red
-dots grow as you consume a window; the number turns red at 80 %. Windows whose reset time has
-passed are shown as 0 % / "RESET" until T3 re-probes.
+phone's last fetch failed (Tailscale down, NAS asleep...). Percentages are **% used**; the white
+dots grow as you consume a window; bar and number turn red at 85 % ("almost out"). Windows whose
+reset time has passed are shown as 0 % / "RESET" until T3 re-probes. The "RESETS 2H 37M"
+countdowns are recomputed locally about once a minute (an inexact, non-wakeup `AlarmManager`
+repeat that only runs while the phone is awake), so they keep ticking with no T3 client connected.
 
 Tap the widget body → opens T3 Code's usage screen (`t3code://settings/usage?tab=limits`) and
 schedules fetches (T3 itself re-probes when it comes to the foreground). Tap the bottom strip →
