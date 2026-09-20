@@ -22,8 +22,8 @@
         android:tint="@color/nothing_red"
         android:importantForAccessibility="no" />
 
-    <!-- Bottom strip: tap to refresh without leaving the home screen. -->
-    <View
+    <!-- Bottom strip: tap to refresh without leaving the home screen (FrameLayout: plain View isn't a RemoteView). -->
+    <FrameLayout
         android:id="@+id/footer_tap"
         android:layout_width="match_parent"
         android:layout_height="34dp"
