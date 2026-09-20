@@ -1,0 +1,31 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_bg"
+    android:contentDescription="@string/widget_description">
+
+    <!-- Alpha masks rendered by UsageRenderer; tints resolve day/night when the launcher inflates. -->
+    <ImageView
+        android:id="@+id/layer_mono"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="fitCenter"
+        android:tint="@color/widget_fg"
+        android:importantForAccessibility="no" />
+
+    <ImageView
+        android:id="@+id/layer_red"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="fitCenter"
+        android:tint="@color/nothing_red"
+        android:importantForAccessibility="no" />
+
+    <!-- Bottom strip: tap to refresh without leaving the home screen. -->
+    <View
+        android:id="@+id/footer_tap"
+        android:layout_width="match_parent"
+        android:layout_height="34dp"
+        android:layout_gravity="bottom" />
+</FrameLayout>
