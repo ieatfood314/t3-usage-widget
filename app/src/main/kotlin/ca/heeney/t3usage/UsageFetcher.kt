@@ -12,7 +12,9 @@ object UsageFetcher {
     fun refresh(context: Context): Boolean {
         val store = UsageStore(context)
         val ok = try {
-            val text = get(store.url)
+            val url = store.url
+            if (url.isBlank()) throw NoUrl()
+            val text = get(url)
             UsageSnapshot.parse(text) // reject malformed payloads before replacing the last good one
             store.saveSuccess(text, System.currentTimeMillis())
             true
@@ -41,7 +43,10 @@ object UsageFetcher {
         }
     }
 
+    private class NoUrl : Exception("No URL set. Open the T3 Usage app and enter your usage.json address.")
+
     private fun describe(error: Exception): String {
+        if (error is NoUrl) return error.message!!
         val message = error.message?.takeIf { it.isNotBlank() }
         return if (message == null) error.javaClass.simpleName else "${error.javaClass.simpleName}: $message"
     }

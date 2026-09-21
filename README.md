@@ -38,7 +38,10 @@ to whatever size the launcher reports (`OPTION_APPWIDGET_SIZES`), dropping rows 
 
 ## Building
 
-Self-contained toolchain in `~/.local/android-toolchain` (JDK 17, Gradle 8.11.1, SDK 35), no root:
+Self-contained toolchain in `~/.local/android-toolchain` (JDK 17, Gradle 8.11.1, SDK 35), no root.
+The published APK has no URL baked in: install it, open **T3 Usage** from the launcher and paste
+your `usage.json` address. To bake one into your own build, add `defaultUrl=https://...` to
+`local.properties` (gitignored).
 
 ```
 ./build.sh        # → app/build/outputs/apk/release/app-release.apk (signed with ~/.config/t3usage/release.jks)

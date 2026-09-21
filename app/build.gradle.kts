@@ -11,6 +11,13 @@ val keystoreProps = Properties().apply {
     if (file.exists()) file.inputStream().use { load(it) }
 }
 
+// Optional baked-in usage.json URL from local.properties (gitignored): defaultUrl=https://...
+// Without it the widget asks you to enter the URL in the app.
+val localProps = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) file.inputStream().use { load(it) }
+}
+
 android {
     namespace = "ca.heeney.t3usage"
     compileSdk = 35
@@ -21,6 +28,7 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
+        resValue("string", "default_url", localProps.getProperty("defaultUrl", ""))
     }
 
     signingConfigs {
